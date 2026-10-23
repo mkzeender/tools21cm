@@ -1,3 +1,4 @@
+from numbers import Real
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 import sys
@@ -75,17 +76,25 @@ def mfp3d(arr, xth=0.5, iterations=10000000, verbose=True, point='random'):
     ms = sin_thetas * sin_phis
     ns = cos_thetas
 
-    if point == 'random':
-        loc = np.argwhere(ar == 1)
-        rand_loc = np.random.randint(0, high=loc.shape[0], size=iterations)
-        xs, ys, zs = loc[rand_loc, 0], loc[rand_loc, 1], loc[rand_loc, 2]
-    else:
-        xs, ys, zs = point
-        if isinstance(xs, (int,float)):
+    
+    match point:
+        case str('random'):
+            loc = np.argwhere(ar == 1)
+            rand_loc = np.random.randint(0, high=loc.shape[0], size=iterations)
+            xs, ys, zs = loc[rand_loc, 0], loc[rand_loc, 1], loc[rand_loc, 2]
+        
+        case np.ndarray(shape=(n, 3)):
+            rand_loc = np.random.randint(0, n, size=iterations)
+            xs, ys, zs = point[rand_loc, 0], point[rand_loc, 1], point[rand_loc, 2]
+
+        case [Real(), Real(), Real()] | np.ndarray(shape=(3,)):
+            xs, ys, zs = point
             if ar[xs, ys, zs] == 0:
-                print('Given point is outside the structure.')
-                return None
+                raise ValueError('Given point is outside the structure.')
+                
             xs, ys, zs = np.full(iterations, xs, dtype=np.float64), np.full(iterations, ys, dtype=np.float64), np.full(iterations, zs, dtype=np.float64)
+        case _:
+            raise TypeError(f'invalid type for "point"')
     if verbose:
         print('done')
     num_sz, size_px = _ray3d(ar, xs, ys, zs, ls, ms, ns, verbose)
