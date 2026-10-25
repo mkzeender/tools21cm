@@ -121,17 +121,23 @@ def mfp2d(arr, xth=0.5, iterations=1000000, verbose=True, point='random'):
     ls = sin_thetas
     ms = cos_thetas
 
-    if point == 'random':
-        loc = np.argwhere(ar == 1)
-        rand_loc = np.random.randint(0, high=loc.shape[0], size=iterations)
-        xs, ys = loc[rand_loc, 0], loc[rand_loc, 1]
-    else:
-        xs, ys = point
-        if ar[xs, ys] == 0:
-            print('Given point is outside the structure.')
-            return None
-        xs, ys = np.full(iterations, xs, dtype=np.float64), np.full(iterations, ys, dtype=np.float64)
-    
+    match point:
+        case str('random'):
+            loc = np.argwhere(ar == 1)
+            rand_loc = np.random.randint(0, high=loc.shape[0], size=iterations)
+            xs, ys = loc[rand_loc, 0], loc[rand_loc, 1]
+
+        case np.ndarray(shape=(n, 2)):
+            rand_loc = np.random.randint(0, high=n, size=iterations)
+            xs, ys = point[rand_loc, 0], point[rand_loc, 1]
+
+        case _:
+            xs, ys = point
+            if ar[xs, ys] == 0:
+                raise ValueError('Given point is outside the structure.')
+            xs, ys = np.full(iterations, xs, dtype=np.float64), np.full(iterations, ys, dtype=np.float64)
+
+
     # Ensure coordinates are of type float64 for compatibility with interpolation
     xs, ys = xs.astype(np.float64), ys.astype(np.float64)
 
